@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "node-webcam": "^0.8.2"
+  }
+}
