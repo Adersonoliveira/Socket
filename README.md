@@ -1,28 +1,59 @@
-# Documentação sobre o Funcionamento 
+# **Documentação do Sistema Socket**
 
-Este documento descreve como o chat do cliente e servidor funciona, com exemplos práticos de como o cliente interage com o servidor, incluindo a ativação da webcam.
+## **Sumário**
 
-## Cenário: Chat com Webcam Ativada
-
-Quando o cliente está conectado ao servidor, ele pode utilizar a webcam para capturar imagens ou ativar/desativar a captura contínua. O servidor recebe as mensagens do cliente e as retransmite para os outros clientes conectados. O cliente pode interagir com a webcam durante a conversa.
-
-### Fluxo Geral
-
-1. O cliente se conecta ao servidor via TCP, após descobrir o servidor via broadcast UDP.
-2. O cliente envia mensagens de texto para o servidor.
-3. O cliente pode ativar a captura contínua de imagens da webcam a qualquer momento.
-4. O servidor retransmite as mensagens de texto para os outros clientes.
-5. O cliente pode capturar uma foto manualmente com o comando `foto` ou ativar/desativar a webcam com os comandos `webcam` (para ativar) e `desligar` (para parar).
-
-### Exemplo de Funcionamento do Chat com Webcam
-
-Aqui está um exemplo de como seria a interação entre o cliente e o servidor, com a webcam ativada:
+1. [Visão Geral](#visao-geral)
+2. [Instalação e Dependências](#instalacao-e-dependencias)
+3. [Fluxo de Funcionamento](#fluxo-de-funcionamento)
+   - [Descoberta do Servidor](#descoberta-do-servidor)
+   - [Conexão e Interação com o Servidor](#conexao-e-interacao-com-o-servidor)
+   - [Comandos Disponíveis](#comandos-disponiveis)
+4. [Exemplo de Interação Completa](#exemplo-de-interacao-completa)
+5. [Comportamento do Servidor](#comportamento-do-servidor)
+6. [Considerações Finais](#consideracoes-finais)
 
 ---
 
-#### 1. **Descoberta do Servidor**
+## **Visão Geral**
 
-Ao iniciar o cliente, ele aguarda uma resposta do servidor via broadcast UDP. O servidor envia um broadcast de sua porta, e o cliente se conecta ao servidor via TCP.
+Este sistema permite a comunicação em tempo real entre clientes via chat TCP, com funcionalidades adicionais para capturar imagens usando a webcam e controlar o movimento do mouse. O cliente pode interagir com o servidor enviando mensagens e executando comandos para ativar/desativar a webcam, inverter ou limitar o movimento do mouse, e até desligar o monitor. O servidor retransmite as mensagens de texto para todos os clientes conectados.
+
+---
+
+## **Instalação e Dependências**
+
+### **Dependências Necessárias**
+
+O código requer as seguintes dependências para funcionar corretamente:
+
+1. **`node-webcam`**: Para capturar imagens via webcam.
+   - Instalar com: `npm install node-webcam`
+   
+2. **`robotjs`**: Para controle do mouse (inverter ou limitar movimento).
+   - Instalar com: `npm install robotjs`
+   
+3. **Bibliotecas nativas do Node.js**:
+   - **`net`**: Para comunicação via TCP.
+   - **`dgram`**: Para comunicação via UDP.
+   - **`readline`**: Para leitura interativa via terminal.
+   - **`child_process`**: Para execução de comandos do sistema operacional.
+
+### **Instalação do Projeto**
+
+1. Clone o repositório ou baixe os arquivos do projeto.
+2. Execute o comando abaixo para instalar as dependências:
+
+   ```bash
+   npm install node-webcam robotjs
+   ```
+
+---
+
+## **Fluxo de Funcionamento**
+
+### **1. Descoberta do Servidor**
+
+O cliente começa em um modo de espera, aguardando o servidor se apresentar via broadcast UDP. Quando o servidor envia um pacote de broadcast com sua porta, o cliente se conecta automaticamente ao servidor via TCP.
 
 ```bash
 Aguardando broadcast do servidor...
@@ -30,71 +61,78 @@ Servidor encontrado no endereço 192.168.0.10:3000
 Conectado ao servidor!
 ```
 
-#### 2. **Conexão com o Servidor e Envio de Mensagens**
+### **2. Conexão e Interação com o Servidor**
 
-Após a conexão com o servidor, o cliente solicita o nome de usuário e começa a enviar mensagens.
+Após a conexão estabelecida, o cliente solicita um nome de usuário e começa a enviar mensagens ao servidor. O servidor retransmite essas mensagens para todos os outros clientes conectados.
 
 ```bash
 Usuário> João
 Bem-vindo, João!
 ```
 
-O cliente pode agora enviar mensagens para o servidor:
+### **3. Comandos Disponíveis**
 
-```bash
-Usuário> Olá, pessoal!
-```
+O cliente pode interagir com a webcam e o mouse através de uma série de comandos. Veja a descrição de cada comando abaixo:
 
-O servidor retransmite esta mensagem para todos os outros clientes conectados.
+#### **Comando `webcam`**
 
-#### 3. **Comando "webcam" para Ativar a Webcam**
-
-O cliente pode ativar a captura contínua de imagens da webcam a cada 1 segundo com o comando `webcam`:
+Ativa a captura contínua de imagens da webcam a cada 1 segundo. A captura não é enviada ao servidor, apenas é feita localmente.
 
 ```bash
 Usuário> webcam
 A webcam foi ligada!
 ```
 
-O cliente começa a capturar imagens a cada 1 segundo, mas as imagens não são enviadas para o servidor. O cliente continua a capturar imagens em intervalos de 1 segundo.
+#### **Comando `foto`**
 
-#### 4. **Comando "foto" para Capturar uma Imagem Manualmente**
-
-Se o cliente deseja capturar uma imagem manualmente, ele pode usar o comando `foto`. A imagem será capturada, mas não enviada ao servidor.
+Captura uma imagem manualmente. Esta imagem não é enviada ao servidor.
 
 ```bash
 Usuário> foto
 Imagem capturada, mas não enviada.
 ```
 
-A imagem é apenas armazenada localmente no cliente e não é compartilhada com os outros usuários.
+#### **Comando `desligar`**
 
-#### 5. **Comando "desligar" para Parar a Webcam**
-
-O cliente pode interromper a captura contínua da webcam com o comando `desligar`:
+Desliga a captura contínua da webcam, interrompendo a captura a cada 1 segundo.
 
 ```bash
 Usuário> desligar
 Desligando a webcam...
 ```
 
-Agora, o cliente não está mais capturando imagens automaticamente.
+#### **Comando `invert_mouse`**
 
-#### 6. **Envio de Mensagens Durante a Captura de Imagens**
-
-Durante a captura de imagens, o cliente pode continuar a interagir no chat. O servidor irá retransmitir as mensagens de texto para todos os outros clientes, independentemente de a webcam estar ativada.
+Inverte o movimento do mouse. A cada movimento do mouse, ele será redirecionado para o lado oposto da tela.
 
 ```bash
-Usuário> Como está todo mundo?
+Usuário> invert_mouse
+Movimento do mouse foi invertido!
 ```
 
-Os outros clientes veriam a mensagem, e o servidor retransmitiria para todos.
+#### **Comando `limit_mouse`**
+
+Limita o movimento do mouse a uma área específica da tela. O cliente deve definir os limites da área.
+
+```bash
+Usuário> limit_mouse
+Movimento do mouse está limitado a uma área específica!
+```
+
+#### **Comando `desliga_monitor`**
+
+Desliga o monitor. O comando varia conforme o sistema operacional (Windows ou Linux).
+
+```bash
+Usuário> desliga_monitor
+Monitor foi desligado!
+```
 
 ---
 
-### Exemplo de Interação Completa
+## **Exemplo de Interação Completa**
 
-Aqui está um exemplo de uma conversa no chat enquanto a webcam está ativada e o cliente captura imagens:
+Veja abaixo um exemplo de uma interação completa do cliente com o servidor enquanto a webcam está ativa e o mouse está invertido:
 
 ```bash
 Aguardando broadcast do servidor...
@@ -107,36 +145,46 @@ Servidor retransmite: <João> Olá, pessoal!
 Usuário> webcam
 A webcam foi ligada!
 [Captura de imagens começa a ocorrer automaticamente a cada 1 segundo]
+Usuário> invert_mouse
+Movimento do mouse foi invertido!
+Usuário> limit_mouse
+Movimento do mouse está limitado a uma área específica!
 Usuário> foto
 Imagem capturada, mas não enviada.
-Usuário> Como está todo mundo?
-Servidor retransmite: <João> Como está todo mundo?
-[Captura de imagens continua ocorrendo em segundo plano]
-Usuário> desligar
-Desligando a webcam...
-[Captura de imagens é interrompida]
+Usuário> desliga_monitor
+Monitor foi desligado!
 ```
 
 ---
 
-## Funcionamento Detalhado
+## **Comportamento do Servidor**
 
-### **Comandos e Ações**
+O servidor tem a responsabilidade de:
 
-- **`webcam`**: Inicia a captura contínua de imagens pela webcam. A cada 1 segundo, uma nova imagem será capturada. Essa captura não é enviada ao servidor, mas pode ser armazenada localmente ou utilizada conforme necessário.
-- **`foto`**: Captura uma imagem uma única vez. Essa imagem também não é enviada ao servidor, mas pode ser armazenada ou exibida localmente.
-- **`desligar`**: Desliga a captura contínua da webcam, interrompendo o ciclo de captura a cada 1 segundo.
-- **Envio de Mensagens**: O cliente pode enviar mensagens a qualquer momento. As mensagens são enviadas para o servidor e retransmitidas a todos os outros clientes.
+1. **Receber mensagens de texto** dos clientes.
+2. **Retransmitir as mensagens** para todos os clientes conectados.
+3. **Não processar imagens** capturadas pela webcam; isso é feito localmente no cliente.
 
-### **Comportamento do Servidor**
-
-- O servidor recebe e retransmite as mensagens de texto para todos os clientes conectados.
-- O servidor não lida com as imagens da webcam. A captura de imagens é uma funcionalidade local do cliente, sem interação com o servidor.
+O servidor não interage com as capturas de imagens ou comandos de controle de dispositivos como o mouse e o monitor, pois essas ações são executadas localmente pelo cliente.
 
 ---
 
-## Conclusão
+## **Considerações Finais**
 
-Este sistema permite uma interação dinâmica entre os clientes, com a capacidade de conversar em tempo real e realizar capturas de imagens da webcam. A captura contínua de imagens pode ser ativada e desativada conforme a necessidade, enquanto o servidor apenas gerencia as mensagens de texto e a conexão entre os clientes.
+Este sistema oferece uma solução simples, porém robusta, para comunicação entre clientes, com funcionalidades adicionais como captura de imagens pela webcam e controle do mouse. Ele permite:
 
-A combinação de comunicação em tempo real com o envio de imagens localmente fornece uma base para expandir este sistema, como incluir envio de imagens ao servidor ou permitir que os clientes compartilhem suas capturas de webcam.
+- Conversas em tempo real.
+- Captura contínua de imagens pela webcam, com a opção de captura manual.
+- Controle avançado do movimento do mouse (invertido ou restrito a uma área).
+- Desligamento do monitor para sistemas Windows e Linux.
+
+Este sistema pode ser expandido para incluir funcionalidades como o envio de imagens ao servidor, bem como o compartilhamento de capturas de webcam entre os clientes.
+
+---
+
+### **Possíveis Melhorias**
+
+- **Envio de Imagens**: Permitir que o cliente envie imagens capturadas ao servidor.
+- **Segurança**: Implementação de autenticação para usuários e criptografia de mensagens.
+- **Interface Gráfica**: Adicionar uma interface gráfica para facilitar a interação do usuário com a webcam e outras funcionalidades.
+
