@@ -91,16 +91,11 @@ function main() {
 }
 
 function startWebcam() {
-    // Inicia a captura da webcam em intervalos de 1 segundo
     webcamInterval = setInterval(() => {
         Webcam.capture("captura", (err, data) => {
             if (err) {
                 console.error("Erro ao capturar a imagem da webcam:", err);
-            } else {
-                // Aqui você pode fazer algo com a imagem, se necessário
-                // No caso, apenas mostramos no console (sem enviar para o servidor)
-                // console.log("Imagem capturada da webcam, mas não enviada.");
-            }
+            } 
         });
     }, 1000); 
 }
