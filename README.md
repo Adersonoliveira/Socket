@@ -1,116 +1,142 @@
-# Documentação sobre o Código de Comunicação de Rede com Webcam
+# Documentação sobre o Funcionamento 
 
-Este projeto implementa um servidor e um cliente utilizando comunicação TCP e UDP, com a funcionalidade de captura de imagens via webcam. Ele é composto por dois principais componentes:
+Este documento descreve como o chat do cliente e servidor funciona, com exemplos práticos de como o cliente interage com o servidor, incluindo a ativação da webcam.
 
-1. **Servidor**: Um servidor TCP que recebe conexões de clientes e pode enviar mensagens de volta aos clientes.
-2. **Cliente**: Um cliente que pode enviar mensagens ao servidor, ativar/desativar a webcam e capturar imagens.
+## Cenário: Chat com Webcam Ativada
 
-## Requisitos
+Quando o cliente está conectado ao servidor, ele pode utilizar a webcam para capturar imagens ou ativar/desativar a captura contínua. O servidor recebe as mensagens do cliente e as retransmite para os outros clientes conectados. O cliente pode interagir com a webcam durante a conversa.
 
-Para executar o código, você precisa garantir que tenha as dependências abaixo instaladas no seu ambiente:
+### Fluxo Geral
 
-- **Node.js** (para rodar o código cliente)
-- **Python 3.x** (para rodar o código servidor)
-- **Dependências Node.js**:
-  - `net` (módulo nativo do Node.js para comunicação TCP)
-  - `dgram` (módulo nativo do Node.js para comunicação UDP)
-  - `readline` (módulo nativo para leitura de entrada do usuário)
-  - `node-webcam` (biblioteca para interação com a webcam)
-  
-No terminal, você pode instalar o `node-webcam` utilizando o comando:
+1. O cliente se conecta ao servidor via TCP, após descobrir o servidor via broadcast UDP.
+2. O cliente envia mensagens de texto para o servidor.
+3. O cliente pode ativar a captura contínua de imagens da webcam a qualquer momento.
+4. O servidor retransmite as mensagens de texto para os outros clientes.
+5. O cliente pode capturar uma foto manualmente com o comando `foto` ou ativar/desativar a webcam com os comandos `webcam` (para ativar) e `desligar` (para parar).
+
+### Exemplo de Funcionamento do Chat com Webcam
+
+Aqui está um exemplo de como seria a interação entre o cliente e o servidor, com a webcam ativada:
+
+---
+
+#### 1. **Descoberta do Servidor**
+
+Ao iniciar o cliente, ele aguarda uma resposta do servidor via broadcast UDP. O servidor envia um broadcast de sua porta, e o cliente se conecta ao servidor via TCP.
+
 ```bash
-npm install node-webcam
+Aguardando broadcast do servidor...
+Servidor encontrado no endereço 192.168.0.10:3000
+Conectado ao servidor!
 ```
 
-### Estrutura do Projeto
+#### 2. **Conexão com o Servidor e Envio de Mensagens**
 
-O projeto é dividido em duas partes: o **cliente** em JavaScript (Node.js) e o **servidor** em Python.
+Após a conexão com o servidor, o cliente solicita o nome de usuário e começa a enviar mensagens.
 
-## Cliente (JavaScript)
+```bash
+Usuário> João
+Bem-vindo, João!
+```
 
-### Funções Principais
+O cliente pode agora enviar mensagens para o servidor:
 
-1. **discoverServer(callback)**:
-   - A função utiliza o módulo `dgram` para criar um socket UDP e aguardar um broadcast do servidor. Quando o servidor enviar a mensagem de descoberta, o cliente irá conectar-se ao servidor na porta informada.
+```bash
+Usuário> Olá, pessoal!
+```
 
-2. **main()**:
-   - Inicializa o processo de descoberta do servidor.
-   - Quando o servidor é encontrado, o cliente se conecta ao servidor TCP utilizando o módulo `net`.
-   - O cliente aceita comandos do usuário via `readline`. O usuário pode enviar mensagens para o servidor, capturar imagens da webcam ou ativar/desativar a webcam.
+O servidor retransmite esta mensagem para todos os outros clientes conectados.
 
-3. **startWebcam() e stopWebcam()**:
-   - O cliente pode ativar a captura contínua de imagens da webcam a cada 1 segundo, ou desativar a captura.
+#### 3. **Comando "webcam" para Ativar a Webcam**
 
-4. **Webcam Capture**:
-   - Quando o usuário digita o comando `foto`, o cliente captura uma imagem da webcam, mas não envia ao servidor. 
-   - O comando `webcam` ativa a captura contínua de imagens da webcam.
+O cliente pode ativar a captura contínua de imagens da webcam a cada 1 segundo com o comando `webcam`:
 
-### Como Executar o Cliente
+```bash
+Usuário> webcam
+A webcam foi ligada!
+```
 
-1. Instale as dependências:
-   ```bash
-   npm install node-webcam
-   ```
+O cliente começa a capturar imagens a cada 1 segundo, mas as imagens não são enviadas para o servidor. O cliente continua a capturar imagens em intervalos de 1 segundo.
 
-2. Execute o cliente:
-   ```bash
-   node cliente.js
-   ```
+#### 4. **Comando "foto" para Capturar uma Imagem Manualmente**
 
-3. Interaja com o cliente:
-   - **Comando `foto`**: Captura uma imagem com a webcam.
-   - **Comando `webcam`**: Inicia a captura contínua de imagens.
-   - **Comando `desligar`**: Desliga a captura da webcam.
+Se o cliente deseja capturar uma imagem manualmente, ele pode usar o comando `foto`. A imagem será capturada, mas não enviada ao servidor.
 
-## Servidor (Python)
+```bash
+Usuário> foto
+Imagem capturada, mas não enviada.
+```
 
-### Funções Principais
+A imagem é apenas armazenada localmente no cliente e não é compartilhada com os outros usuários.
 
-1. **broadcast_discovery(port)**:
-   - A função envia pacotes UDP de broadcast para todos os dispositivos na rede local, permitindo que os clientes descubram a porta do servidor.
+#### 5. **Comando "desligar" para Parar a Webcam**
 
-2. **main()**:
-   - O servidor é iniciado utilizando o módulo `socket` no protocolo TCP. Ele escuta conexões de clientes e inicia uma thread para tratar cada novo cliente.
-   - O servidor também inicia uma thread para enviar broadcasts de descoberta de porta.
+O cliente pode interromper a captura contínua da webcam com o comando `desligar`:
 
-3. **messagesTreatment(client)**:
-   - Trata as mensagens recebidas de cada cliente, utilizando a função `broadcast` para retransmitir a mensagem para todos os outros clientes conectados.
+```bash
+Usuário> desligar
+Desligando a webcam...
+```
 
-4. **broadcast(msg, client)**:
-   - Envia a mensagem recebida de um cliente para todos os outros clientes conectados.
+Agora, o cliente não está mais capturando imagens automaticamente.
 
-5. **deleteClient(client)**:
-   - Remove um cliente da lista de clientes conectados quando ele se desconecta.
+#### 6. **Envio de Mensagens Durante a Captura de Imagens**
 
-6. **showConnectedClients()**:
-   - Exibe os clientes atualmente conectados ao servidor.
+Durante a captura de imagens, o cliente pode continuar a interagir no chat. O servidor irá retransmitir as mensagens de texto para todos os outros clientes, independentemente de a webcam estar ativada.
 
-### Como Executar o Servidor
+```bash
+Usuário> Como está todo mundo?
+```
 
-1. Instale o Python (se não tiver instalado) e execute:
-   ```bash
-   python servidor.py
-   ```
+Os outros clientes veriam a mensagem, e o servidor retransmitiria para todos.
 
-2. O servidor irá começar a escutar na porta escolhida e fará broadcast de sua porta para que os clientes possam se conectar.
+---
 
-### Interação Cliente-Servidor
+### Exemplo de Interação Completa
 
-- O cliente realiza uma busca ativa pela rede para encontrar o servidor, utilizando a comunicação UDP.
-- Quando o servidor é encontrado, o cliente tenta se conectar via TCP e pode começar a enviar e receber mensagens.
-- O servidor transmite as mensagens para todos os outros clientes conectados.
+Aqui está um exemplo de uma conversa no chat enquanto a webcam está ativada e o cliente captura imagens:
 
-## Exemplos de Uso
+```bash
+Aguardando broadcast do servidor...
+Servidor encontrado no endereço 192.168.0.10:3000
+Conectado ao servidor!
+Usuário> João
+Bem-vindo, João!
+Usuário> Olá, pessoal!
+Servidor retransmite: <João> Olá, pessoal!
+Usuário> webcam
+A webcam foi ligada!
+[Captura de imagens começa a ocorrer automaticamente a cada 1 segundo]
+Usuário> foto
+Imagem capturada, mas não enviada.
+Usuário> Como está todo mundo?
+Servidor retransmite: <João> Como está todo mundo?
+[Captura de imagens continua ocorrendo em segundo plano]
+Usuário> desligar
+Desligando a webcam...
+[Captura de imagens é interrompida]
+```
 
-1. **Descoberta do Servidor**:
-   O cliente ficará aguardando até que o servidor envie o broadcast indicando sua porta.
+---
 
-2. **Envio de Mensagens**:
-   Uma vez conectado, o cliente pode enviar mensagens para o servidor. As mensagens serão retransmitidas para todos os outros clientes conectados.
+## Funcionamento Detalhado
 
-3. **Captura de Imagens**:
-   O cliente pode capturar imagens a qualquer momento com o comando `foto`, ou ativar/desativar a captura contínua com os comandos `webcam` e `desligar`.
+### **Comandos e Ações**
+
+- **`webcam`**: Inicia a captura contínua de imagens pela webcam. A cada 1 segundo, uma nova imagem será capturada. Essa captura não é enviada ao servidor, mas pode ser armazenada localmente ou utilizada conforme necessário.
+- **`foto`**: Captura uma imagem uma única vez. Essa imagem também não é enviada ao servidor, mas pode ser armazenada ou exibida localmente.
+- **`desligar`**: Desliga a captura contínua da webcam, interrompendo o ciclo de captura a cada 1 segundo.
+- **Envio de Mensagens**: O cliente pode enviar mensagens a qualquer momento. As mensagens são enviadas para o servidor e retransmitidas a todos os outros clientes.
+
+### **Comportamento do Servidor**
+
+- O servidor recebe e retransmite as mensagens de texto para todos os clientes conectados.
+- O servidor não lida com as imagens da webcam. A captura de imagens é uma funcionalidade local do cliente, sem interação com o servidor.
+
+---
 
 ## Conclusão
 
-Este projeto exemplifica uma aplicação simples de comunicação em rede usando TCP/UDP para enviar mensagens entre um servidor e múltiplos clientes, com a adição de funcionalidades de webcam utilizando a biblioteca `node-webcam`. O servidor gerencia conexões de clientes, enquanto o cliente interage com o servidor e também com a webcam para capturar imagens.
+Este sistema permite uma interação dinâmica entre os clientes, com a capacidade de conversar em tempo real e realizar capturas de imagens da webcam. A captura contínua de imagens pode ser ativada e desativada conforme a necessidade, enquanto o servidor apenas gerencia as mensagens de texto e a conexão entre os clientes.
+
+A combinação de comunicação em tempo real com o envio de imagens localmente fornece uma base para expandir este sistema, como incluir envio de imagens ao servidor ou permitir que os clientes compartilhem suas capturas de webcam.
